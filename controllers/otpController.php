@@ -1,7 +1,7 @@
 <?php
 
-require_once __DIR__ . '/../models/otp.php';
-require_once __DIR__ . '/../utils/mailer.php';
+require_once dirname(__DIR__) . '/models/otp.php';
+require_once dirname(__DIR__) . '/utils/mailer.php';
 
 // ✅ SEND OTP
 function sendOtp() {
