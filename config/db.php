@@ -5,6 +5,11 @@ try {
     // $client = new MongoDB\Client("mongodb://127.0.0.1:27017");
     $client = new MongoDB\Client(getenv('MONGO_URI'));
 
+    $client = new MongoDB\Client($uri, [], [
+        'tls' => true,
+        'tlsAllowInvalidCertificates' => true,
+        'tlsAllowInvalidHostnames' => true,
+    ]);
     // DB name
     $db = $client->panditAppNew;
 
