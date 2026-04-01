@@ -1,12 +1,9 @@
 <?php
-
 $request = $_SERVER['REQUEST_URI'];
-
-// remove query string
 $request = explode('?', $request)[0];
 
-// routing
-$root = '/var/task/user';
+// ✅ Yeh fix hai — hardcoded '/var/task/user' hatao
+$root = dirname(__DIR__);  // automatically sahi path milega
 
 if (preg_match("#^/api/v1/address/pincode/([^/]+)$#", $request, $matches)) {
     $_GET['pin'] = $matches[1];
@@ -23,6 +20,7 @@ if (preg_match("#^/api/v1/address/pincode/([^/]+)$#", $request, $matches)) {
 } else {
     echo json_encode([
         "error" => "Route not found",
-        "route" => $request
+        "route" => $request,
+        "debug_root" => $root  // ✅ temporarily add karo debug ke liye
     ]);
 }

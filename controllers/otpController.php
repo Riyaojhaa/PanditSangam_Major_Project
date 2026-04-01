@@ -1,6 +1,6 @@
 <?php
 
-$root = '/var/task/user';
+$root = dirname(__DIR__);
 require_once $root . '/models/otp.php';
 require_once $root . '/utils/mailer.php';
 
