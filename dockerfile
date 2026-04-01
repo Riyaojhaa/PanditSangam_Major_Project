@@ -6,8 +6,8 @@ RUN apt-get update && apt-get install -y libssl-dev \
 
 RUN a2enmod rewrite
 
-COPY . /var/www/html/
+RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
-COPY .htaccess /var/www/html/.htaccess
+COPY . /var/www/html/
 
 EXPOSE 80
