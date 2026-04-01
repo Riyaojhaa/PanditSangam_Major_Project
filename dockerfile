@@ -1,6 +1,11 @@
 FROM php:8.2-apache
 
-RUN apt-get update && apt-get install -y libssl-dev unzip \
+RUN apt-get update && apt-get install -y \
+    libssl-dev \
+    unzip \
+    ca-certificates \
+    openssl \
+    && update-ca-certificates \
     && pecl install mongodb \
     && docker-php-ext-enable mongodb
 

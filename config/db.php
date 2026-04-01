@@ -1,15 +1,10 @@
 <?php
 require __DIR__ . '/../vendor/autoload.php';
 
-// ✅ Direct URI hardcode karo — pehle test ke liye
-$mongoUri = "mongodb+srv://rojha5250_db_user:vQwpNQFvRC1efW8j@cluster0.qvwfpec.mongodb.net/panditAppNew?retryWrites=true&w=majority&appName=Cluster0";
+$mongoUri = "mongodb+srv://rojha5250_db_user:vQwpNQFvRC1efW8j@cluster0.qvwfpec.mongodb.net/panditAppNew?retryWrites=true&w=majority&appName=Cluster0&tls=true&tlsCAFile=/etc/ssl/certs/ca-certificates.crt";
 
 try {
-    $client = new MongoDB\Client($mongoUri, [], [
-        'tls' => true,
-        'tlsAllowInvalidCertificates' => true,
-        'tlsAllowInvalidHostnames' => true,
-    ]);
+    $client = new MongoDB\Client($mongoUri);
 
     $db = $client->panditAppNew;
     $usersCollection = $db->users;
