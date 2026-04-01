@@ -1,8 +1,2 @@
 RewriteEngine On
-
-RewriteBase /PanditAppNew/UserFlow/RegistrationAPI/
-
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-
-RewriteRule ^ index.php [QSA,L]
+RewriteRule ^(.*)$ /api/index.php [L,QSA]
