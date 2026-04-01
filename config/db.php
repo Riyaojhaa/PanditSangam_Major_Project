@@ -1,19 +1,17 @@
 <?php
 require __DIR__ . '/../vendor/autoload.php';
 
-try {
-    // $client = new MongoDB\Client("mongodb://127.0.0.1:27017");
-    $client = new MongoDB\Client(getenv('MONGO_URI'));
+// ✅ Direct URI hardcode karo — pehle test ke liye
+$mongoUri = "mongodb+srv://rojha5250_db_user:vQwpNQFvRC1efW8j@cluster0.qvwfpec.mongodb.net/panditAppNew?retryWrites=true&w=majority&appName=Cluster0";
 
-    $client = new MongoDB\Client($uri, [], [
+try {
+    $client = new MongoDB\Client($mongoUri, [], [
         'tls' => true,
         'tlsAllowInvalidCertificates' => true,
         'tlsAllowInvalidHostnames' => true,
     ]);
-    // DB name
-    $db = $client->panditAppNew;
 
-    // Collections
+    $db = $client->panditAppNew;
     $usersCollection = $db->users;
     $otpCollection = $db->otp;
 
