@@ -1,9 +1,11 @@
 <?php
-require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/bootstrap.php';
 
-$mongoUri = "mongodb+srv://rojha5250_db_user:vQwpNQFvRC1efW8j@cluster0.qvwfpec.mongodb.net/panditAppNew?retryWrites=true&w=majority&appName=Cluster0&tls=true&tlsCAFile=/etc/ssl/certs/ca-certificates.crt";
-
-$mongoUri = getenv('MONGO_URI') ?: "mongodb+srv://rojha5250_db_user:vQwpNQFvRC1efW8j@cluster0.qvwfpec.mongodb.net/panditAppNew?retryWrites=true&w=majority&appName=Cluster0";
+$mongoUri = $_ENV['MONGO_URI'] ?? $_SERVER['MONGO_URI'] ?? null;
+if (!is_string($mongoUri) || $mongoUri === '') {
+    $g = getenv('MONGO_URI');
+    $mongoUri = ($g !== false && $g !== '') ? $g : 'mongodb+srv://rojha5250_db_user:vQwpNQFvRC1efW8j@cluster0.qvwfpec.mongodb.net/panditAppNew?retryWrites=true&w=majority&appName=Cluster0';
+}
 
 try {
     $client = new MongoDB\Client($mongoUri, [

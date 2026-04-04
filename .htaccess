@@ -1,5 +1,5 @@
 RewriteEngine On
+# Relative target: resolves under this folder (works in XAMPP subdirs; no hardcoded /api path)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_URI} !^/api/index\.php
-RewriteRule ^(.*)$ /api/index.php [L,QSA]
+RewriteRule ^(.*)$ api/index.php [L,QSA]
