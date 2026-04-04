@@ -4,6 +4,8 @@ $root = dirname(__DIR__);
 require_once $root . '/models/Otp.php';
 require_once $root . '/utils/mailer.php';
 
+require_once __DIR__ . '/../utils/validators.php';
+
 // ✅ SEND OTP
 function sendOtp() {
 
@@ -11,18 +13,18 @@ function sendOtp() {
     $email = $data['email'] ?? null;
 
     // ❌ Email missing
-    if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (!$email || !isValidEmailStrict($email)) {
         http_response_code(400); // HTTP 400 for error
         echo json_encode([
             "apiResponseCode" => 400,
             "apiResponseData" => [
                 "responseCode" => 400,
                 "responseData" => null,
-                "responseMessage" => "Email required",
+                "responseMessage" => "Email required / Email not correct",
                 "responseFrom" => "sendOTP"
             ],
             "apiResponseFrom" => "php",
-            "apiResponseMessage" => "Email required"
+            "apiResponseMessage" => "Email required / Email not correct"
         ]);
         return;
     }
@@ -96,7 +98,7 @@ function verifyOtp() {
     $otp   = $data['otp'] ?? null;
 
     // ❌ Missing email or OTP
-    if (!$email || !$otp || !filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match('/^[0-9]{6}$/', $otp)) {
+    if (!$email || !$otp || !isValidEmailStrict($email) || !preg_match('/^[0-9]{6}$/', $otp)) {
         http_response_code(400);
         echo json_encode([
             "apiResponseCode" => 400,

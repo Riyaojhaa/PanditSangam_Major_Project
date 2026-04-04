@@ -18,7 +18,7 @@ try {
     $client->listDatabases();
 
     $db = $client->panditAppNew;
-    $usersCollection = $db->users;
+    $userCollection = $db->users;
     $otpCollection = $db->otp;
 
 } catch (Exception $e) {
