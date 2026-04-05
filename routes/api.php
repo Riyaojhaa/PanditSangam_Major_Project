@@ -14,18 +14,29 @@ if (preg_match("#^/api/v1/address/pincode/([^/]+)$#", $request, $matches)) {
     $_GET['pin'] = $matches[1];
     include $root . '/controllers/addressController.php';
 
-} elseif ($request === '/api/v1/auth/send-otp') {
+} elseif ($request === '/api/v1/auth/send-otp' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     include $root . '/controllers/otpController.php';
     sendOtp();
 
-} elseif ($request === '/api/v1/auth/verify-otp') {
+} elseif ($request === '/api/v1/auth/verify-otp' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     include $root . '/controllers/otpController.php';
     verifyOtp();
 
-} elseif ($request === '/api/v1/auth/register' || $request === '/api/v1/auth/register/') {
+} elseif ($request === '/api/v1/auth/register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     include $root . '/controllers/registerController.php';
     register();
 
+} elseif ($request === '/api/v1/auth/login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    include $root . '/controllers/loginController.php';
+    login();
+
+} elseif ($request === '/api/v1/user/profile' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    include $root . '/controllers/profileController.php';
+    getProfile();
+
+} elseif ($request === '/api/v1/user/profile' && $_SERVER['REQUEST_METHOD'] === 'PUT') {
+    include $root . '/controllers/profileController.php';
+    updateProfile();
 
 } else {
     http_response_code(404);
