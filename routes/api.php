@@ -22,11 +22,11 @@ if (preg_match("#^/api/v1/address/pincode/([^/]+)$#", $request, $matches)) {
     include $root . '/controllers/otpController.php';
     verifyOtp();
 
-} elseif ($request === '/api/v1/auth/register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+} elseif ($request === '/api/v1/auth/user/register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     include $root . '/controllers/registerController.php';
     register();
 
-} elseif ($request === '/api/v1/auth/login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+} elseif ($request === '/api/v1/auth/user/login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     include $root . '/controllers/loginController.php';
     login();
 
