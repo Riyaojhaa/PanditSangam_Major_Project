@@ -38,6 +38,9 @@ if (preg_match("#^/api/v1/address/pincode/([^/]+)$#", $request, $matches)) {
     include $root . '/controllers/profileController.php';
     updateProfile();
 
+} elseif ($request === '/api/v1/upload' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    include $root . '/controllers/uploadController.php';
+    uploadFile();
 } else {
     http_response_code(404);
     echo json_encode([

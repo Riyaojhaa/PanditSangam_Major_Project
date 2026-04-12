@@ -27,3 +27,23 @@ function verifyJWT($token){
         return false;
     }
 }
+
+function getUserFromToken(){
+
+    $headers = getallheaders();
+
+    if(!isset($headers['Authorization'])){
+        return null;
+    }
+
+    $authHeader = $headers['Authorization'];
+    $token = str_replace("Bearer ", "", $authHeader);
+
+    $data = verifyJWT($token);
+
+    if(!$data){
+        return null;
+    }
+
+    return $data->id;
+}

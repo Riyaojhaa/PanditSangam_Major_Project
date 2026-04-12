@@ -20,6 +20,7 @@ try {
     $db = $client->panditAppNew;
     $userCollection = $db->users;
     $otpCollection = $db->otp;
+    $uploadCollection = $db->uploads;
 
 } catch (Exception $e) {
     header("Content-Type: application/json");
