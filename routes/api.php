@@ -18,7 +18,7 @@ if (preg_match("#^/api/v1/address/pincode/([^/]+)$#", $request, $matches)) {
     include $root . '/controllers/otpController.php';
     sendOtp();
 
-} elseif ($request === '/api/v1/auth/verify-otp' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+} elseif ($request === '/api/v1/auth/verify-otp' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     include $root . '/controllers/otpController.php';
     verifyOtp();
 
