@@ -51,7 +51,7 @@ function uploadFile(){
     // 📂 CATEGORY FROM BODY (required)
     $category = isset($_POST['category']) ? trim($_POST['category']) : null;
 
-    $allowedCategories = ["profilepic", "certificates", "panditvideo"];
+    $allowedCategories = ["profilepic", "certificates", "panditvideo", "palmreading"];
 
     if (!$category || !in_array($category, $allowedCategories)) {
         http_response_code(400);
@@ -438,6 +438,68 @@ function uploadFile(){
             ]);
             return;
         }
+
+        if ($category === "palmreading") {
+
+            $tmpPath      = $files['tmp_name'][0];
+            $originalName = $files['name'][0];
+            $fileSize     = $files['size'][0];
+
+            $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+            $fileType = finfo_file($finfo, $tmpPath);
+            finfo_close($finfo);
+
+            $allowedImageTypes = ["image/jpeg", "image/png", "image/jpg"];
+
+            if (!in_array($fileType, $allowedImageTypes)) {
+                http_response_code(400);
+                echo json_encode([
+                    "apiResponseCode" => 400,
+                    "apiResponseData" => [
+                        "responseCode"    => 400,
+                        "responseData"    => null,
+                        "responseMessage" => "Palm image must be jpg or png",
+                        "responseFrom"    => "uploadFile"
+                    ],
+                    "apiResponseFrom"    => "php",
+                    "apiResponseMessage" => "Palm image must be jpg or png"
+                ]);
+                return;
+            }
+
+            $upload = $cloudinary->uploadApi()->upload($tmpPath, [
+        "resource_type" => "image",
+        "folder"        => "user_uploads/palmreading",
+        "public_id"     => uniqid()
+    ]);
+
+    $url      = $upload['secure_url'];
+    $publicId = $upload['public_id'];
+
+    // SAVE IN palmreadingimg
+    $insert = $db->palmreadingimg->insertOne([
+        "userId"    => $userId,
+        "imageUrl"  => $url,
+        "publicId"  => $publicId,
+        "status"    => "pending",
+        "result"    => null,
+        "createdAt" => date("Y-m-d H:i:s")
+    ]);
+
+    http_response_code(200);
+    echo json_encode([
+        "apiResponseCode" => 200,
+        "apiResponseData" => [
+            "responseCode"    => 200,
+            "responseData"    => ["url" => $url, "palmId" => (string)$insert->getInsertedId()],
+            "responseMessage" => "Palm reading image uploaded successfully",
+            "responseFrom"    => "uploadFile"
+        ],
+        "apiResponseFrom"    => "php",
+        "apiResponseMessage" => "Palm reading image uploaded successfully"
+    ]);
+    return;
+}
 
     } catch (Exception $e) {
 

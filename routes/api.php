@@ -41,7 +41,11 @@ if (preg_match("#^/api/v1/address/pincode/([^/]+)$#", $request, $matches)) {
 } elseif ($request === '/api/v1/upload' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     include $root . '/controllers/uploadController.php';
     uploadFile();
-} else {
+} elseif ($request === '/api/v1/palmreading' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    include $root . '/controllers/palmReadingController.php';
+    getPalmReading();
+} 
+else {
     http_response_code(404);
     echo json_encode([
         "error" => "Route not found",
