@@ -22,6 +22,9 @@ if (preg_match("#^/api/v1/address/pincode/([^/]+)$#", $request, $matches)) {
     include $root . '/controllers/otpController.php';
     verifyOtp();
 
+}elseif($request === '/api/v1/auth/reset-password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    include $root . '/controllers/otpController.php';
+    resetPassword();
 } elseif ($request === '/api/v1/auth/user/register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     include $root . '/controllers/registerController.php';
     register();

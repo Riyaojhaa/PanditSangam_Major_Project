@@ -3,6 +3,7 @@
 $root = dirname(__DIR__);
 require_once $root . '/models/Otp.php';
 require_once $root . '/utils/mailer.php';
+require_once $root . '/models/User.php';
 
 require_once __DIR__ . '/../utils/validators.php';
 
@@ -11,29 +12,63 @@ function sendOtp() {
 
     $data = json_decode(file_get_contents("php://input"), true);
     $email = $data['email'] ?? null;
+    $type  = $data['type'] ?? null;
 
     // ❌ Email missing
-    if (!$email || !isValidEmailStrict($email)) {
+    if (!$email || !isValidEmailStrict($email) || !in_array($type, ['register', 'forgot_password'])) {
         http_response_code(400); // HTTP 400 for error
         echo json_encode([
             "apiResponseCode" => 400,
             "apiResponseData" => [
                 "responseCode" => 400,
                 "responseData" => null,
-                "responseMessage" => "Email required / Email not correct",
+                "responseMessage" => "Invalid email or type",
                 "responseFrom" => "sendOTP"
             ],
             "apiResponseFrom" => "php",
-            "apiResponseMessage" => "Email required / Email not correct"
+            "apiResponseMessage" => "Invalid email or type"
         ]);
         return;
     }
 
+    $user = findUserByEmail($email);
+
+    if($type == 'register' && $user){
+        http_response_code(400);
+        echo json_encode([
+            "apiResponseCode" => 400,
+            "apiResponseData" => [
+                "responseCode" => 400,
+                "responseData" => null,
+                "responseMessage" => "User already exists",
+                "responseFrom" => "sendOTP"
+            ],
+            "apiResponseFrom" => "php",
+            "apiResponseMessage" => "User already exists"
+        ]);
+        return;
+    }
+
+    if($type == 'forgot_password' && !$user){
+        http_response_code(400);
+        echo json_encode([
+            "apiResponseCode" => 400,
+            "apiResponseData" => [
+                "responseCode" => 400,
+                "responseData" => null,
+                "responseMessage" => "Email not registered",
+                "responseFrom" => "sendOTP"
+            ],
+            "apiResponseFrom" => "php",
+            "apiResponseMessage" => "Email not registered"
+        ]);
+        return;
+    }
     // ✅ Generate OTP
     $otp = generateOtp();
 
     // Save OTP in DB
-    saveOtp($email, $otp);
+    saveOtp($email, $otp, $type);
 
     // Send HTML email
     $subject = "Your OTP Code - PanditSangam";
@@ -96,26 +131,27 @@ function verifyOtp() {
     $data = json_decode(file_get_contents("php://input"), true);
     $email = $data['email'] ?? null;
     $otp   = $data['otp'] ?? null;
+    $type  = $data['type'] ?? null;
 
     // ❌ Missing email or OTP
-    if (!$email || !$otp || !isValidEmailStrict($email) || !preg_match('/^[0-9]{6}$/', $otp)) {
+    if (!$email || !$otp || !isValidEmailStrict($email) || !preg_match('/^[0-9]{6}$/', $otp) || !in_array($type, ['register', 'forgot_password'])) {
         http_response_code(400);
         echo json_encode([
             "apiResponseCode" => 400,
             "apiResponseData" => [
                 "responseCode" => 400,
                 "responseData" => null,
-                "responseMessage" => "Email & OTP are required",
+                "responseMessage" => "Email, OTP and Type are required",
                 "responseFrom" => "verifyOTP"
             ],
             "apiResponseFrom" => "php",
-            "apiResponseMessage" => "Email & OTP are required"
+            "apiResponseMessage" => "Email, OTP and Type are required"
         ]);
         return;
     }
 
     // ✅ Verify OTP in DB
-    $isValid = verifyOtpFromDB($email, $otp);
+    $isValid = verifyOtpFromDB($email, $otp, $type);
 
     if ($isValid) {
         http_response_code(200);
@@ -144,4 +180,77 @@ function verifyOtp() {
             "apiResponseMessage" => "OTP not verified"
         ]);
     }
+}
+// ✅ RESET PASSWORD
+function resetPassword() {
+
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    $email = $data['email'] ?? null;
+    $otp   = $data['otp'] ?? null;
+    $newPassword = $data['new_password'] ?? null;
+
+    if (!$email || !$otp || !$newPassword) {
+        http_response_code(400);
+        echo json_encode([
+            "apiResponseCode" => 400,
+            "apiResponseData" => [
+                "responseCode" => 400,
+                "responseData" => null,
+                "responseMessage" => "Email, OTP and new password are required",
+                "responseFrom" => "resetPassword"
+            ],
+            "apiResponseFrom" => "php",
+            "apiResponseMessage" => "Email, OTP and new password are required"
+        ]);
+        return;
+    }
+    // ✅ Verify OTP again (IMPORTANT)
+    $isValid = verifyOtpFromDB($email, $otp, "forgot_password");
+
+    if (!$isValid) {
+        http_response_code(400);
+        echo json_encode([
+            "apiResponseCode" => 400,
+            "apiResponseData" => [
+                "responseCode" => 400,
+                "responseData" => null,
+                "responseMessage" => "Invalid or expired OTP",
+                "responseFrom" => "resetPassword"
+            ],
+            "apiResponseFrom" => "php",
+            "apiResponseMessage" => "Invalid or expired OTP"
+        ]);
+        return;
+    }
+    // ✅ Hash password
+    $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+
+    global $userCollection;
+    global $otpCollection;
+
+    // ✅ Update password
+    $userCollection->updateOne(
+        ["email" => $email],
+        ['$set' => ["password" => $hashedPassword]]
+    );
+
+    // ✅ Delete OTP after use
+    $otpCollection->deleteOne([
+        "email" => $email,
+        "type" => "forgot_password"
+    ]);
+
+    http_response_code(200);
+    echo json_encode([
+        "apiResponseCode" => 200,
+        "apiResponseData" => [
+            "responseCode" => 200,
+            "responseData" => ["email" => $email],
+            "responseMessage" => "Password updated successfully",
+            "responseFrom" => "resetPassword"
+        ],
+        "apiResponseFrom" => "php",
+        "apiResponseMessage" => "Password updated successfully"
+    ]);
 }
