@@ -1,21 +1,40 @@
 <?php
 
-function callGemini($imageUrl){
+// Load .env file
+$envPath = __DIR__ . '/../.env';
+if (file_exists($envPath)) {
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+            [$key, $value] = explode('=', $line, 2);
+            putenv(trim($key) . '=' . trim($value));
+        }
+    }
+}
 
-    $apiKey = "AIzaSyDEYnlc9JNrBp1ko9eAsBwcT-3en0wFt8M";
-    // $apiKey = getenv("GEMINI_API_KEY");
+function callGemini($imageUrl) {
 
-$prompt = "Analyze this palm image and describe:
+    $apiKey = getenv("GEMINI_API_KEY");
 
-1. Overall summary (2 lines)
-2. Life Line
-3. Heart Line
-4. Head Line
-5. Fate Line
-6. Sun Line
+    if (empty($apiKey)) {
+        echo json_encode([
+            "apiResponseCode" => 500,
+            "apiResponseData" => [
+                "responseCode" => 500,
+                "responseData" => ["result" => null],
+                "responseMessage" => "GEMINI_API_KEY not set in .env",
+                "responseFrom" => "callGemini"
+            ],
+            "apiResponseFrom" => "php",
+            "apiResponseMessage" => "GEMINI_API_KEY not set in .env"
+        ]);
+        return null;
+    }
 
-Keep explanation simple and human-friendly.";
-    // ⚠️ URL → base64
+    $prompt = 'You are a professional palm reader. Analyze the palm image carefully and return ONLY valid JSON with no extra text, no markdown, no code fences, no newlines inside values. Use this exact format:
+
+{"summary":"Overall reading summary here","life_line":"Detailed life line reading here","heart_line":"Detailed heart line reading here","head_line":"Detailed head line reading here","fate_line":"Detailed fate line reading here","sun_line":"Detailed sun line reading here"}';
+
     $imageData = base64_encode(file_get_contents($imageUrl));
 
     $data = [
@@ -29,101 +48,165 @@ Keep explanation simple and human-friendly.";
                     ]
                 ]
             ]
-        ]]
+        ]],
+        "generationConfig" => [
+            "temperature" => 0.7,
+            "topK" => 40,
+            "topP" => 0.95,
+            "maxOutputTokens" => 2048,
+            "responseMimeType" => "application/json"
+        ]
     ];
 
     $ch = curl_init();
-
-   curl_setopt($ch, CURLOPT_URL, "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey");
+    curl_setopt($ch, CURLOPT_URL, "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json'
-    ]);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 
     $response = curl_exec($ch);
+    $curlError = curl_error($ch);
     curl_close($ch);
 
+    if ($curlError) {
+        echo json_encode([
+            "apiResponseCode" => 500,
+            "apiResponseData" => [
+                "responseCode" => 500,
+                "responseData" => ["result" => null],
+                "responseMessage" => "cURL error: " . $curlError,
+                "responseFrom" => "callGemini"
+            ],
+            "apiResponseFrom" => "php",
+            "apiResponseMessage" => "cURL error: " . $curlError
+        ]);
+        return null;
+    }
+
     $res = json_decode($response, true);
-    // echo "<pre>";
-    // print_r($res);
-    // exit;
-    if(!$res){
-         echo json_encode([
+
+    if (!$res) {
+        echo json_encode([
             "apiResponseCode" => 400,
             "apiResponseData" => [
                 "responseCode" => 400,
                 "responseData" => ["result" => null],
-                "responseMessage" => "Palm reading AI service failed",
+                "responseMessage" => "Invalid response from Gemini API",
                 "responseFrom" => "callGemini"
             ],
             "apiResponseFrom" => "php",
-            "apiResponseMessage" => "Palm reading AI service failed"
+            "apiResponseMessage" => "Invalid response from Gemini API"
         ]);
-        return;
+        return null;
     }
 
-    // return $res['candidates'][0]['content']['parts'][0]['text'] ?? "No result";
+    if (isset($res['error'])) {
+        echo json_encode([
+            "apiResponseCode" => 400,
+            "apiResponseData" => [
+                "responseCode" => 400,
+                "responseData" => ["result" => null],
+                "responseMessage" => $res['error']['message'] ?? "Gemini API error",
+                "responseFrom" => "callGemini"
+            ],
+            "apiResponseFrom" => "php",
+            "apiResponseMessage" => $res['error']['message'] ?? "Gemini API error"
+        ]);
+        return null;
+    }
+
     $text = $res['candidates'][0]['content']['parts'][0]['text'] ?? "";
 
+    if (empty($text)) {
+        echo json_encode([
+            "apiResponseCode" => 400,
+            "apiResponseData" => [
+                "responseCode" => 400,
+                "responseData" => ["result" => null],
+                "responseMessage" => "Empty response from Gemini",
+                "responseFrom" => "callGemini"
+            ],
+            "apiResponseFrom" => "php",
+            "apiResponseMessage" => "Empty response from Gemini"
+        ]);
+        return null;
+    }
+
     return formatPalmResult($text);
-    
-    print_r($data);
-exit;
 }
 
 function formatPalmResult($text) {
 
-    return [
-        "summary" => extractSection($text, "Overall Impression"),
+    // Remove markdown code fences
+    $text = preg_replace('/```json\s*/i', '', $text);
+    $text = preg_replace('/```\s*/i', '', $text);
+    $text = trim($text);
 
+    // Try direct JSON parse
+    $parsed = json_decode($text, true);
+
+    // If failed, extract JSON using regex
+    if (!$parsed) {
+        preg_match('/\{.*\}/s', $text, $matches);
+        $jsonString = $matches[0] ?? "";
+        $parsed = json_decode($jsonString, true);
+    }
+
+    // If summary itself contains a JSON string (nested), parse it
+    if ($parsed && isset($parsed['summary']) && is_string($parsed['summary'])) {
+        $nestedCheck = json_decode($parsed['summary'], true);
+        if ($nestedCheck && isset($nestedCheck['summary'])) {
+            $parsed = $nestedCheck;
+        }
+    }
+
+    if (!$parsed) {
+        return [
+            "summary" => $text,
+            "predictions" => []
+        ];
+    }
+
+    return [
+        "summary" => $parsed['summary'] ?? "Not available",
         "predictions" => [
             [
                 "category" => "Life Line",
                 "emoji" => "✋",
                 "headline" => "Life Energy",
-                "detail" => extractSection($text, "Life Line", 300),
+                "detail" => $parsed['life_line'] ?? "Not available",
                 "score" => rand(70, 90) / 100
             ],
             [
                 "category" => "Heart Line",
                 "emoji" => "❤️",
                 "headline" => "Love Nature",
-                "detail" => extractSection($text, "Heart Line", 300),
+                "detail" => $parsed['heart_line'] ?? "Not available",
                 "score" => rand(60, 85) / 100
             ],
             [
                 "category" => "Head Line",
                 "emoji" => "🧠",
                 "headline" => "Thinking Style",
-                "detail" => extractSection($text, "Head Line", 300),
+                "detail" => $parsed['head_line'] ?? "Not available",
                 "score" => rand(70, 90) / 100
             ],
             [
                 "category" => "Fate Line",
                 "emoji" => "🌟",
                 "headline" => "Career Path",
-                "detail" => extractSection($text, "Fate Line", 300),
+                "detail" => $parsed['fate_line'] ?? "Not available",
                 "score" => rand(60, 80) / 100
             ],
             [
                 "category" => "Sun Line",
                 "emoji" => "☀️",
                 "headline" => "Success & Fame",
-                "detail" => extractSection($text, "Sun Line", 300),
+                "detail" => $parsed['sun_line'] ?? "Not available",
                 "score" => rand(60, 75) / 100
             ]
         ]
     ];
-}
-
-function extractSection($text, $section) {
-
-    $pattern = "/\\*\\*".$section.".*?\\*\\*(.*?)(?=\\n\\n|\\*\\*|$)/s";
-
-    if(preg_match($pattern, $text, $matches)){
-        return trim($matches[1]);
-    }
-
-    return "Not clearly visible, but indicates balanced traits.";
 }

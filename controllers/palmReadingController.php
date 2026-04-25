@@ -6,7 +6,7 @@ require_once __DIR__ . '/../utils/geminiHelper.php';
 
 use MongoDB\BSON\ObjectId;
 
-function getPalmReading(){
+function getPalmReading() {
 
     global $db;
 
@@ -14,7 +14,7 @@ function getPalmReading(){
 
     $userId = getUserFromToken();
 
-    if(!$userId){
+    if (!$userId) {
         http_response_code(401);
         echo json_encode([
             "apiResponseCode" => 401,
@@ -32,7 +32,7 @@ function getPalmReading(){
 
     $data = json_decode(file_get_contents("php://input"), true);
 
-    if(!isset($data['palmId'])){
+    if (!isset($data['palmId'])) {
         http_response_code(400);
         echo json_encode([
             "apiResponseCode" => 400,
@@ -55,7 +55,7 @@ function getPalmReading(){
         "userId" => $userId
     ]);
 
-    if(!$record){
+    if (!$record) {
         http_response_code(404);
         echo json_encode([
             "apiResponseCode" => 404,
@@ -71,33 +71,36 @@ function getPalmReading(){
         return;
     }
 
-    // 🔁 Already processed check (optimization)
-    if($record['status'] === "processed"){
-    $result = $record['result'] ?? null;
-
-    echo json_encode([
-        "apiResponseCode" => 200,
-        "apiResponseData" => [
-            "responseCode" => 200,
-            "responseData" => [
-                "result" => $result,
-                "cached" => true
+    // ✅ Return cached result only if result actually has data
+    if ($record['status'] === "processed" && !empty($record['result'])) {
+        echo json_encode([
+            "apiResponseCode" => 200,
+            "apiResponseData" => [
+                "responseCode" => 200,
+                "responseData" => [
+                    "result" => $record['result'],
+                    "cached" => true
+                ],
+                "responseMessage" => "Palm reading result fetched successfully",
+                "responseFrom" => "getPalmReading"
             ],
-            "responseMessage" => "Palm reading result fetched successfully",
-            "responseFrom" => "getPalmReading"
-        ],
-        "apiResponseFrom" => "php",
-        "apiResponseMessage" => "Palm reading result fetched successfully"
-    ]);
-    return;
-}
+            "apiResponseFrom" => "php",
+            "apiResponseMessage" => "Palm reading result fetched successfully"
+        ]);
+        return;
+    }
 
     $imageUrl = $record['imageUrl'];
 
-    // 🤖 AI CALL (Gemini)
+    // 🤖 Call Gemini
     $resultText = callGemini($imageUrl);
 
-    // 💾 Save result
+    // ❌ Gemini failed — don't save, don't return success
+    if ($resultText === null) {
+        return;
+    }
+
+    // ✅ Save result to DB
     $db->palmreadingimg->updateOne(
         ["_id" => new ObjectId($palmId)],
         ['$set' => [
@@ -110,7 +113,10 @@ function getPalmReading(){
         "apiResponseCode" => 200,
         "apiResponseData" => [
             "responseCode" => 200,
-            "responseData" => ["result" => $resultText, "cached" => false],
+            "responseData" => [
+                "result" => $resultText,
+                "cached" => false
+            ],
             "responseMessage" => "Palm reading result fetched successfully",
             "responseFrom" => "getPalmReading"
         ],
