@@ -47,7 +47,10 @@ if (preg_match("#^/api/v1/address/pincode/([^/]+)$#", $request, $matches)) {
 } elseif ($request === '/api/v1/palmreading' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     include $root . '/controllers/palmReadingController.php';
     getPalmReading();
-} 
+} elseif ($request === '/api/v1/auth/pandit/register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    include $root . '/controllers/panditRegisterController.php';
+    panditRegister();
+}
 else {
     http_response_code(404);
     echo json_encode([

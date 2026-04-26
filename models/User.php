@@ -16,12 +16,22 @@ function registerUser($data){
         "district"     => $data['district'] ?? null,
         "address"      => $data['address'],
         "password"     => password_hash($data['password'], PASSWORD_DEFAULT),
+        "step"             => 1,
+        "isPandit"         => false,
+        "panditOnboarding" => [
+            "currentStep"     => 1,
+            "status"          => "user_registered",
+            "rejectionReason" => null
+        ],
         "createdAt"    => new MongoDB\BSON\UTCDateTime(),
         "updatedAt"    => new MongoDB\BSON\UTCDateTime()
     ];
 
-    $userCollection->insertOne($insertData);
-    return true;
+    $result = $userCollection->insertOne($insertData);
+    return [
+        'success' => true,
+        'userId'  => (string)$result->getInsertedId()
+    ];
 }
 
 function findUserByEmail($email){

@@ -21,6 +21,7 @@ try {
     $userCollection = $db->users;
     $otpCollection = $db->otp;
     $uploadCollection = $db->uploads;
+    $panditCollection = $db->selectCollection('pandits');
 
 } catch (Exception $e) {
     header("Content-Type: application/json");
