@@ -68,3 +68,21 @@ function updatePandit($userId, $data){
 
     return $result->getModifiedCount() > 0;
 }
+
+function getPanditById($panditId){
+    global $panditCollection;
+    return $panditCollection->findOne([
+        '_id' => new MongoDB\BSON\ObjectId($panditId)
+    ]);
+}
+function getAllPandits(){
+    global $panditCollection;
+    $cursor = $panditCollection->find([]);
+    $pandits = [];
+    foreach ($cursor as $pandit) {
+        $pandit['_id']    = (string)$pandit['_id'];
+        $pandit['userId'] = (string)$pandit['userId'];
+        $pandits[] = $pandit;
+    }
+    return $pandits;
+}

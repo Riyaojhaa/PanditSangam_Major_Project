@@ -53,8 +53,15 @@ if (preg_match("#^/api/v1/address/pincode/([^/]+)$#", $request, $matches)) {
 }elseif($request === '/api/v1/questions' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     include $root . '/controllers/questionsController.php';
     getQuestions();
-} 
-else {
+} elseif ($request === '/api/v1/pandit/profile' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    include $root . '/controllers/panditController.php';
+    getPanditByIdController();
+
+} elseif ($request === '/api/v1/pandits' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    include $root . '/controllers/panditController.php';
+    getAllPanditsController();
+
+}else {
     http_response_code(404);
     echo json_encode([
         "error" => "Route not found",
