@@ -961,11 +961,12 @@ if (!$isMultiple) {
 
             // 💾 Save in pandits collection
             $db->pandits->updateOne(
-                ["userId" => $userId],
+                ["userId" => new ObjectId($userId)],   
                 ['$set' => [
                     "videoUrl"  => $url,
-                    "publicId"  => $publicId
-                ]]
+                    "videoPublicId"  => $publicId,     
+                    "updatedAt" => new \MongoDB\BSON\UTCDateTime()
+                 ]]
             );
 
             // ✅ User table mein step 3 update
