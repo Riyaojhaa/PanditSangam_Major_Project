@@ -1,4 +1,13 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 $request = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $request = ($request === '' || $request === false) ? '/' : $request;
 
@@ -61,6 +70,9 @@ if (preg_match("#^/api/v1/address/pincode/([^/]+)$#", $request, $matches)) {
     include $root . '/controllers/panditController.php';
     getAllPanditsController();
 
+}elseif ($request === '/api/v1/admin/pandit/action' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    include $root . '/controllers/adminController.php';
+    panditAction();
 }else {
     http_response_code(404);
     echo json_encode([

@@ -34,6 +34,7 @@ function buildPanditUserResponse($pandit) {
                 "poojaExperience" => $pandit['poojaExperience'] ?? 0,
                 "certifications"  => $pandit['certifications'] ?? [],
                 "aadharCardUrl"   => $pandit['aadharCardUrl'] ?? null,
+                "videoUrl"        => $pandit['videoUrl'] ?? null, 
                 "travelPref"      => $pandit['travelPref'] ?? "",
                 "knownLanguage"   => $pandit['knownLanguage'] ?? "",
                 "about"           => $pandit['about'] ?? "",
