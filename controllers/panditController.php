@@ -1,7 +1,46 @@
 <?php
 
 require_once __DIR__ . '/../models/Pandit.php';
+require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../utils/jwtHelper.php';
+
+// ✅ Helper — pandit + user data build karo
+function buildPanditUserResponse($pandit) {
+    $userId = (string)$pandit['userId'];
+    $user   = getUserById($userId);
+
+    return [
+        "user" => [
+            "id"           => (string)$user['_id'],
+            "name"         => $user['name'] ?? "",
+            "age"          => $user['age'] ?? "",
+            "email"        => $user['email'] ?? "",
+            "phone_number" => $user['phone_number'] ?? "",
+            "pincode"      => $user['pincode'] ?? "",
+            "address"      => $user['address'] ?? "",
+            "city"         => $user['city'] ?? "",
+            "state"        => $user['state'] ?? "",
+            "district"     => $user['district'] ?? "",
+            "step"         => $user['step'] ?? 1,
+            "isPandit"     => $user['isPandit'] ?? false,
+            "panditOnboarding" => [
+                "currentStep"     => $user['panditOnboarding']['currentStep'] ?? 1,
+                "status"          => $user['panditOnboarding']['status'] ?? "user_registered",
+                "rejectionReason" => $user['panditOnboarding']['rejectionReason'] ?? null
+            ],
+            "panditData" => [
+                "panditId"        => (string)$pandit['_id'],
+                "poojaType"       => $pandit['poojaType'] ?? "",
+                "poojaExperience" => $pandit['poojaExperience'] ?? 0,
+                "certifications"  => $pandit['certifications'] ?? [],
+                "aadharCardUrl"   => $pandit['aadharCardUrl'] ?? null,
+                "travelPref"      => $pandit['travelPref'] ?? "",
+                "knownLanguage"   => $pandit['knownLanguage'] ?? "",
+                "about"           => $pandit['about'] ?? "",
+            ]
+        ]
+    ];
+}
 
 // =====================================================
 // 🔍 GET PANDIT BY ID
@@ -27,7 +66,6 @@ function getPanditByIdController(){
         return;
     }
 
-    // URL se panditId lo — ?id=xxx
     $panditId = $_GET['id'] ?? null;
 
     if(!$panditId){
@@ -65,16 +103,15 @@ function getPanditByIdController(){
             return;
         }
 
-        // ObjectId ko string mein convert karo
-        $pandit['_id']    = (string)$pandit['_id'];
-        $pandit['userId'] = (string)$pandit['userId'];
+        // ✅ Pandit ki userId se user fetch karke merge karo
+        $responseData = buildPanditUserResponse($pandit);
 
         http_response_code(200);
         echo json_encode([
             "apiResponseCode" => 200,
             "apiResponseData" => [
                 "responseCode"    => 200,
-                "responseData"    => $pandit,
+                "responseData"    => $responseData,
                 "responseMessage" => "Pandit fetched successfully",
                 "responseFrom"    => "getPanditById"
             ],
@@ -125,17 +162,23 @@ function getAllPanditsController(){
     try {
         $pandits = getAllPandits();
 
+        // ✅ Har pandit ke liye userId se user fetch karke merge karo
+        $result = [];
+        foreach ($pandits as $pandit) {
+            $result[] = buildPanditUserResponse($pandit);
+        }
+
         http_response_code(200);
         echo json_encode([
             "apiResponseCode" => 200,
             "apiResponseData" => [
                 "responseCode"    => 200,
-                "responseData"    => $pandits,
-                "responseMessage" => count($pandits) . " pandit(s) found",
+                "responseData"    => ["pandits" => $result],
+                "responseMessage" => count($result) . " pandit(s) found",
                 "responseFrom"    => "getAllPandits"
             ],
             "apiResponseFrom"    => "php",
-            "apiResponseMessage" => count($pandits) . " pandit(s) found"
+            "apiResponseMessage" => count($result) . " pandit(s) found"
         ]);
 
     } catch (Exception $e) {

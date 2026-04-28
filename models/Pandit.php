@@ -77,12 +77,10 @@ function getPanditById($panditId){
 }
 function getAllPandits(){
     global $panditCollection;
-    $cursor = $panditCollection->find([]);
+    $cursor  = $panditCollection->find([]);
     $pandits = [];
     foreach ($cursor as $pandit) {
-        $pandit['_id']    = (string)$pandit['_id'];
-        $pandit['userId'] = (string)$pandit['userId'];
-        $pandits[] = $pandit;
+        $pandits[] = $pandit;  // ✅ raw — controller mein convert hoga
     }
     return $pandits;
 }

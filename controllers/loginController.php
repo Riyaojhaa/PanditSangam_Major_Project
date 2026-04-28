@@ -57,7 +57,7 @@ function login(){
                             "id" => (string)$user['_id'],
                             "name" => $user['name'],
                             "email" => $user['email'],
-                            "isPandit" => $user['isPandit']
+                            "isPandit" => $user['isPandit'] ?? false, 
                         ]
                     ],
                     "responseMessage" => "User logged in successfully",
