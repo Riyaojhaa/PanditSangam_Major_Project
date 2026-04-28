@@ -143,22 +143,22 @@ function getAllPanditsController(){
 
     header("Content-Type: application/json");
 
-    $userId = getUserFromToken();
-    if(!$userId){
-        http_response_code(401);
-        echo json_encode([
-            "apiResponseCode" => 401,
-            "apiResponseData" => [
-                "responseCode"    => 401,
-                "responseData"    => null,
-                "responseMessage" => "Unauthorized",
-                "responseFrom"    => "getAllPandits"
-            ],
-            "apiResponseFrom"    => "php",
-            "apiResponseMessage" => "Unauthorized"
-        ]);
-        return;
-    }
+    // $userId = getUserFromToken();
+    // if(!$userId){
+    //     http_response_code(401);
+    //     echo json_encode([
+    //         "apiResponseCode" => 401,
+    //         "apiResponseData" => [
+    //             "responseCode"    => 401,
+    //             "responseData"    => null,
+    //             "responseMessage" => "Unauthorized",
+    //             "responseFrom"    => "getAllPandits"
+    //         ],
+    //         "apiResponseFrom"    => "php",
+    //         "apiResponseMessage" => "Unauthorized"
+    //     ]);
+    //     return;
+    // }
 
     try {
         $pandits = getAllPandits();
