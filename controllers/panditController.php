@@ -8,6 +8,12 @@ require_once __DIR__ . '/../utils/jwtHelper.php';
 function buildPanditUserResponse($pandit) {
     $userId = (string)$pandit['userId'];
     $user   = getUserById($userId);
+     if (!$user) {
+        return [
+            "user" => null,
+            "error" => "User not found for this pandit"
+        ];
+    }
 
     return [
         "user" => [
